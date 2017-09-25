@@ -8,12 +8,12 @@ date_format = "%Y-%m-%d"
 dir_names = [name for name in os.listdir(os.getcwd()) if os.path.isdir(name)]
 
 #Removing the temporary .git directory
-dir_names = [name for name in dir_names if name != '.git']
+dir_names = [name for name in dir_names if name != '.git' and name != 'IssueNumbers']
 
 def getOpeningClosingTime(json_data):
 	final_data = []
 	
-	for obj in data['data']:
+	for obj in json_data['data']:
 		if 'pull' in obj['html_url']:
 			continue
 		if obj['state'] == "open":
@@ -25,7 +25,7 @@ def getOpeningClosingTime(json_data):
 def getDescriptionLength(json_data):
 	final_data = []
 	
-	for obj in data['data']:
+	for obj in json_data['data']:
 		if 'pull' in obj['html_url']:
 			continue
 		final_data.append(len(obj['body']))
@@ -36,7 +36,7 @@ def getDescriptionLength(json_data):
 def hasReproductionSteps(json_data):
 	final_data = []
 	
-	for obj in data['data']:
+	for obj in json_data['data']:
 		if	'pull' in obj['html_url']:
 			continue
 		if	('Reproduce' in obj['body']) or ('reproduce' in obj['body']) or('Reproduction' in obj['body']):
@@ -49,7 +49,7 @@ def hasReproductionSteps(json_data):
 def hasLabel(json_data):
 	final_data = []
 	
-	for obj in data['data']:
+	for obj in json_data['data']:
 		if	'pull' in obj['html_url']:
 			continue
 		if	len(obj['labels']) > 0:
@@ -61,7 +61,7 @@ def hasLabel(json_data):
 	
 def setOfDistinctLabels(json_data, label_set):
 	
-	for obj in data['data']:
+	for obj in json_data['data']:
 		if 'pull' in obj['html_url']:
 			continue
 		for label in obj['labels']:
@@ -72,19 +72,40 @@ def setOfDistinctLabels(json_data, label_set):
 		
 	return label_set
 	
-
+def getIssueNumbers(json_data):
+	final_data = []
+	
+	for obj in json_data['data']:
+		if 'pull' in obj['html_url']:
+			continue
+		final_data.append(obj['number'])
+	
+	return final_data
+	
+	
 for dir_name in dir_names:
 	print 'For ', dir_name, ' : -'
 	filenames = os.listdir(os.path.join(os.getcwd(), dir_name))
 		
-	setOfLabels = dict()
+	final_data = list()
 
 	for filename in filenames:
 		with open(os.path.join(os.getcwd(), os.path.join(dir_name,filename))) as data_file:
 			data = json.load(data_file)
 		
-		setOfLabels = setOfDistinctLabels(data, setOfLabels)
+		final_data.extend(getIssueNumbers(data))
 	
-	pprint(setOfLabels)
-		
+	with open(os.path.join(os.getcwd(), 'IssueNumbers/' + dir_name + '_issue.txt'), 'w') as output_file:
+		for d in final_data:
+			output_file.write(str(d) + '\n')
+			
+	
+	
+	
+	
+	
+	
+	
+	
+	
 		
