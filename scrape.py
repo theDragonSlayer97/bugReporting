@@ -32,7 +32,7 @@ for dir_name in dir_names:
 				countLabels += 1
 			if len(obj['assignees']) > 0:
 				countAssignee += 1
-			if 'Reproduction' in obj['body']:
+			if ('Reproduction' in obj['body']) or ('Reproduce' in obj['body']):
 				countReproductionSteps += 1
 			if len(obj['body']) == 0:
 				continue
