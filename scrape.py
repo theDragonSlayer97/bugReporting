@@ -7,11 +7,8 @@ date_format = "%Y-%m-%d"
 
 dir_names = [name for name in os.listdir(os.getcwd()) if os.path.isdir(name)]
 
+#Removing the temporary .git directory
 dir_names = [name for name in dir_names if name != '.git']
-
-
-#Last will be .git so we have to remove that
-dir_names = dir_names[:-1]
 
 def getOpeningClosingTime(json_data):
 	final_data = []
