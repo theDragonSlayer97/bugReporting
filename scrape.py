@@ -5,11 +5,14 @@ import numpy as np
 from datetime import datetime
 date_format = "%Y-%m-%d"
 
-dir_names = ['Libgdx/', 'cocos2d/', 'Cryengine/']
+dir_names = [name for name in os.listdir(os.getcwd()) if os.path.isdir(name)]
+
+#Last will be .git so we have to remove that
+dir_names = dir_names[:-1]
 
 for dir_name in dir_names:
 	print 'For ', dir_name, ' : -'
-	filenames = os.listdir(dir_name)
+	filenames = os.listdir(os.path.join(os.getcwd(), dir_name))
 
 	countLabels = 0
 	countAssignee = 0
@@ -18,7 +21,7 @@ for dir_name in dir_names:
 	timeToFix = []
 
 	for filename in filenames:
-		with open(dir_name+filename) as data_file:
+		with open(os.path.join(os.getcwd(), os.path.join(dir_name,filename))) as data_file:
 			data = json.load(data_file)
 
 		for obj in data['data']:
