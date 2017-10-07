@@ -22,6 +22,10 @@ def getOpeningClosingTime(json_data):
 	for obj in json_data['data']:
 		if 'pull' in obj['html_url']:
 			continue
+		#pprint(obj['labels'])
+		#print any(['bug' in o['name'] for o in obj['labels']])
+		if not any(['bug' in o['name'] for o in obj['labels']]):
+			continue	
 		if obj['state'] == "open":
 			final_data.append((-1, -1))
 		else:
@@ -35,6 +39,8 @@ def getDescriptionLength(json_data):
 	for obj in json_data['data']:
 		if 'pull' in obj['html_url']:
 			continue
+		if not any(['bug' in o['name'] for o in obj['labels']]):
+			continue	
 		if obj['body'] == None:
 			final_data.append(0)
 		else:
@@ -49,6 +55,8 @@ def hasReproductionSteps(json_data):
 	for obj in json_data['data']:
 		if	'pull' in obj['html_url']:
 			continue
+		if not any(['bug' in o['name'] for o in obj['labels']]):
+			continue	
 		if	('Reproduce' in obj['body']) or ('reproduce' in obj['body']) or('Reproduction' in obj['body']):
 			final_data.append(1)
 		else:
@@ -63,9 +71,9 @@ def hasLabel(json_data):
 		if	'pull' in obj['html_url']:
 			continue
 		if	len(obj['labels']) > 0:
-			final_data.append(1)
+			final_data.append(True)
 		else:
-			final_data.append(0)
+			final_data.append(False)
 	
 	return final_data	
 	
@@ -107,7 +115,8 @@ for dir_name in dir_names:
 	filenames = os.listdir(os.path.join(os.getcwd(), dir_name))
 
 	description_lengths = list()
-	mttr = list()		
+	mttr = list()	
+	hrs = list()	
 
 	for filename in filenames:
 		with open(os.path.join(os.getcwd(), os.path.join(dir_name,filename))) as data_file:
@@ -116,26 +125,41 @@ for dir_name in dir_names:
 		description_lengths.extend(getDescriptionLength(data))
 		
 		mttr.extend(getOpeningClosingTime(data))
+		
+		hrs.extend(hasReproductionSteps(data))
+
+	if len(mttr) == 0 or len(description_lengths) == 0 or not any(hrs):
+		continue
 
 	mttr = [ diffInDays(x, y) for x, y in mttr ]
 	
-	zipped = zip(mttr, description_lengths)
-	zipped = [(x, y) for x, y in zipped if x != -1 and y != 0]
+	mttr = map(float, mttr)
+	description_lengths = map(float, description_lengths)
 	
-	#zipped = normalize(np.array(zipped), axis = 0, norm = 'max')
+	m = max(mttr)
 	
-	#pprint(np.array(zipped))
+	mttr = [ val/m for val in mttr ]
 	
-	mttr, description_lengths = map(list, zip(*zipped))
-	#mttr = normalize(np.array(mttr), norm = 'max')
-	#description_lengths = normalize(np.array(description_lengths), norm = 'max')
+	m = max(description_lengths)
+	
+	description_lengths = [ val/(1*m) for val in description_lengths]
+	
+	p = zip(description_lengths, hrs, mttr)
+	
+	temp = list()
+	
+	for x, y, z in p:
+		if y:
+			temp.append((x+0.00,z))
+		else:
+			temp.append((x,z))
+	
+	description_lengths, mttr = zip(*temp)
 	
 	print len(mttr)
 	
-	plt.scatter(mttr, description_lengths)
-	plt.grid()
-	
-	#plt.show()
+	plt.plot(description_lengths, mttr, 'ro')
+	plt.show()
 	
 	print scipy.stats.spearmanr(mttr, description_lengths)
 	print scipy.stats.pearsonr(mttr, description_lengths)
