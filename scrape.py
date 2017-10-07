@@ -49,6 +49,7 @@ def hasReproductionSteps(json_data):
 	for obj in json_data['data']:
 		if	'pull' in obj['html_url']:
 			continue
+
 		if	('Reproduce' in obj['body']) or ('reproduce' in obj['body']) or('Reproduction' in obj['body']):
 			final_data.append(1)
 		else:
