@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 from datetime import datetime
-date_format = "%Y-%m-%d"
+date_format = "%Y-%m-%dT%H:%M:%SZ"
 
 dir_names = [name for name in os.listdir(os.getcwd()) if os.path.isdir(name)]
 
@@ -24,8 +24,8 @@ def getOpeningClosingTime(json_data):
 			continue
 		#pprint(obj['labels'])
 		#print any(['bug' in o['name'] for o in obj['labels']])
-		if not any(['bug' in o['name'] for o in obj['labels']]):
-			continue	
+		#if not any(['bug' in o['name'] for o in obj['labels']]):
+		#	continue	
 		if obj['state'] == "open":
 			final_data.append((-1, -1))
 		else:
@@ -39,8 +39,8 @@ def getDescriptionLength(json_data):
 	for obj in json_data['data']:
 		if 'pull' in obj['html_url']:
 			continue
-		if not any(['bug' in o['name'] for o in obj['labels']]):
-			continue	
+		#if not any(['bug' in o['name'] for o in obj['labels']]):
+		#	continue	
 		if obj['body'] == None:
 			final_data.append(0)
 		else:
@@ -55,8 +55,11 @@ def hasReproductionSteps(json_data):
 	for obj in json_data['data']:
 		if	'pull' in obj['html_url']:
 			continue
-		if not any(['bug' in o['name'] for o in obj['labels']]):
-			continue	
+		#if not any(['bug' in o['name'] for o in obj['labels']]):
+		#	continue
+		if obj['body'] == None:
+			final_data.append(0)
+			continue
 		if	('Reproduce' in obj['body']) or ('reproduce' in obj['body']) or('Reproduction' in obj['body']):
 			final_data.append(1)
 		else:
@@ -103,10 +106,14 @@ def getIssueNumbers(json_data):
 def diffInDays(first, second):
 	if first == -1:
 		return -1
-	first = datetime.strptime(first[0:10], date_format)
-	second = datetime.strptime(second[0:10], date_format)
 	
-	return (second - first).days
+	first = datetime.strptime(first, date_format)
+	second = datetime.strptime(second, date_format)
+	
+	days = (second-first).days
+	hours = days*24 + (second-first).seconds/3600
+	
+	return hours
 	
 
 	
@@ -159,7 +166,7 @@ for dir_name in dir_names:
 	print len(mttr)
 	
 	plt.plot(description_lengths, mttr, 'ro')
-	plt.show()
+	#plt.show()
 	
 	print scipy.stats.spearmanr(mttr, description_lengths)
 	print scipy.stats.pearsonr(mttr, description_lengths)
