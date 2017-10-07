@@ -163,8 +163,8 @@ for dir_name in dir_names:
 	
 	print scipy.stats.spearmanr(mttr, description_lengths)
 	print scipy.stats.pearsonr(mttr, description_lengths)
-	
-	
+	print scipy.stats.kurtosis(mttr,bias=False)
+	print scipy.stats.skew(mttr,bias=False)
 	
 	
 	
