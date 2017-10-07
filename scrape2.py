@@ -24,8 +24,8 @@ def getOpeningClosingTime(json_data):
 			continue
 		#pprint(obj['labels'])
 		#print any(['bug' in o['name'] for o in obj['labels']])
-		if not any(['bug' in o['name'] for o in obj['labels']]):
-			continue	
+#		if not any(['bug' in o['name'] for o in obj['labels']]):
+#			continue	
 		if obj['state'] == "open":
 			final_data.append((-1, -1))
 		else:
@@ -39,8 +39,8 @@ def getDescriptionLength(json_data):
 	for obj in json_data['data']:
 		if 'pull' in obj['html_url']:
 			continue
-		if not any(['bug' in o['name'] for o in obj['labels']]):
-			continue	
+#		if not any(['bug' in o['name'] for o in obj['labels']]):
+#			continue	
 		if obj['body'] == None:
 			final_data.append(0)
 		else:
@@ -55,8 +55,8 @@ def hasReproductionSteps(json_data):
 	for obj in json_data['data']:
 		if	'pull' in obj['html_url']:
 			continue
-		if not any(['bug' in o['name'] for o in obj['labels']]):
-			continue	
+#		if not any(['bug' in o['name'] for o in obj['labels']]):
+#			continue	
 		if	('Reproduce' in obj['body']) or ('reproduce' in obj['body']) or('Reproduction' in obj['body']):
 			final_data.append(1)
 		else:
@@ -135,7 +135,7 @@ for dir_name in dir_names:
 	
 	mttr = map(float, mttr)
 	description_lengths = map(float, description_lengths)
-	
+	'''
 	m = max(mttr)
 	
 	mttr = [ val/m for val in mttr ]
@@ -155,17 +155,20 @@ for dir_name in dir_names:
 			temp.append((x,z))
 	
 	description_lengths, mttr = zip(*temp)
-	
+	'''
+	#Removing Outliers
+	mttr=[i for i in mttr if (abs(i - np.mean(i)) < 10 * np.std(i))]
+	description_lengths=[i for i in description_lengths if (abs(i - np.mean(i)) < 2 * np.std(i))]
 	print len(mttr)
 	
-	plt.plot(description_lengths, mttr, 'ro')
-	plt.show()
+	#plt.plot( mttr,description_lengths, 'ro')
 	
 	print scipy.stats.spearmanr(mttr, description_lengths)
 	print scipy.stats.pearsonr(mttr, description_lengths)
-	print scipy.stats.kurtosis(mttr,bias=False)
-	print scipy.stats.skew(mttr,bias=False)
-	
+	print scipy.stats.kurtosis(mttr,bias=True)
+	print scipy.stats.skew(mttr,bias=True)
+	plt.hist(mttr,bins=50)	
+	plt.show()
 	
 	
 	
