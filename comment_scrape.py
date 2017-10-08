@@ -124,12 +124,38 @@ def getContribComments(json_data):
 	return count
 def getFirstCommentDate(json_data):
 	for obj in json_data['data']:
-		return obj['created_at'][0:10]
+		if 'CONTRIBUTOR' or 'OWNER'in obj['author_association']:
+			return obj['created_at'][0:10]
+	return None
+def getCommentTimeline(json_data):
+	comment_tl=str()
+	for obj in json_data['data']:
+		comment_tl = comment_tl+obj['created_at'][0:10]+"_"
+	return comment_tl
+def getDistinctParticipants(json_data):
+	owner=[]
+	contrib=[]
+	mem=[]
+	none=[]
+	for obj in json_data['data']:
+		if 'CONTRIBUTOR' in obj['author_association']:
+			contrib.append(obj['user']['id'])
+			continue
+		if 'OWNER' in obj['author_association']:
+			owner.append(obj['user']['id'])
+			continue	
+		if 'MEMBER' in obj['author_association']:
+			mem.append(obj['user']['id'])
+			continue	
+		else:
+			none.append(obj['user']['id'])
+	return len(list(set(owner))),len(list(set(contrib))),len(list(set(mem))),len(list(set(none)))	
+
 ##Driver part
 	
 for dir_name in dir_names:
-	comments_contrib=list()
-	comments_firstdate=list()
+	comments_contrib = list()
+	comments_timeline = list()
 	print 'For ', dir_name, ' : -'
 	filenames = os.listdir(os.path.join(os.getcwd(), dir_name))
 	filenames = [val for val in filenames if 'comment' in val]
@@ -138,12 +164,15 @@ for dir_name in dir_names:
 			data = json.load(data_file)
 		
 		comments_contrib.append(getContribComments(data))	#no of comments from contributor	
-		date = getFirstCommentDate(data)
-		if date is not None:
-			date = filename.split('_')[1].split('.')[0] + '_'+date
-			comments_firstdate.append(date)
-	with open(os.path.join(os.getcwd(), os.path.join(dir_name,'first_response')),'w') as output:
-		for val in comments_firstdate:
+		date = getFirstCommentDate(data)			#First comment date of contributor or owner
+		timeline = getCommentTimeline(data)			#timeline of comments
+		a,b,c,d = getDistinctParticipants(data)
+		participant = str(a)+","+str(b)+","+str(c)+","+str(d)
+		if timeline is not "" and date is not None:
+			timeline = filename.split('_')[1].split('.')[0] + ':\n'+timeline[:-1]+"\n"+date+"\n"+participant
+			comments_timeline.append(timeline)
+	with open(os.path.join(os.getcwd(), os.path.join(dir_name,'cmt_timeline')),'w') as output:
+		for val in comments_timeline:
 			output.write(val)
 			output.write('\n')
 		
