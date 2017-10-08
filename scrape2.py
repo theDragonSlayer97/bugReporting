@@ -44,7 +44,7 @@ def getDescriptionLength(json_data):
 		if obj['body'] == None:
 			final_data.append(0)
 		else:
-			final_data.append(len(obj['body']))
+			final_data.append(len(obj['body'].split(' ')))
 	
 	return final_data	
 
@@ -113,17 +113,36 @@ def diffInDays(first, second):
 	days = (second-first).days
 	hours = days*24 + (second-first).seconds/3600
 	
-	return hours
+	return days//30
 	
+def createRankVector(vec):
+	sorted_vec = sorted(vec)
+	rank = [sorted_vec.index(d) + 1 for d in vec]
+	
+	return rank
+	
+def calcSpearmanRho(vec1, vec2):
 
+	rank1 = createRankVector(vec1)
+	rank2 = createRankVector(vec2)
 	
+	sumDiffSq = sum([(d1-d2)**2 for d1, d2 in zip(rank1, rank2)])
+	
+	p = (6.0 * sumDiffSq)/(len(rank1)*(len(rank1)**2 - 1))
+	
+	p = 1 - p
+	
+	return p
+
+
+description_lengths = list()
+mttr = list()	
+hrs = list()	
+
 for dir_name in dir_names:
 	print 'For ', dir_name, ' : -'
 	filenames = os.listdir(os.path.join(os.getcwd(), dir_name))
 
-	description_lengths = list()
-	mttr = list()	
-	hrs = list()	
 
 	for filename in filenames:
 		with open(os.path.join(os.getcwd(), os.path.join(dir_name,filename))) as data_file:
@@ -135,41 +154,43 @@ for dir_name in dir_names:
 		
 		hrs.extend(hasReproductionSteps(data))
 
-	if len(mttr) == 0 or len(description_lengths) == 0 or not any(hrs):
-		continue
+		if len(mttr) == 0 or len(description_lengths) == 0 or not any(hrs):
+			continue
 
-	mttr = [ diffInDays(x, y) for x, y in mttr ]
+mttr = [ diffInDays(x, y) for x, y in mttr ]
+
+mttr = map(float, mttr)
+description_lengths = map(float, description_lengths)
 	
-	mttr = map(float, mttr)
-	description_lengths = map(float, description_lengths)
+m = max(mttr)
 	
-	m = max(mttr)
+#mttr = [ val/m for val in mttr ]
 	
-	mttr = [ val/m for val in mttr ]
+m = max(description_lengths)
 	
-	m = max(description_lengths)
+#description_lengths = [ val/(1*m) for val in description_lengths]
 	
-	description_lengths = [ val/(1*m) for val in description_lengths]
+p = zip(description_lengths, hrs, mttr)
 	
-	p = zip(description_lengths, hrs, mttr)
+temp = list()
 	
-	temp = list()
+for x, y, z in p:
+	if y:
+		temp.append((x+0.00,z))
+	else:
+		temp.append((x,z))
 	
-	for x, y, z in p:
-		if y:
-			temp.append((x+0.00,z))
-		else:
-			temp.append((x,z))
+description_lengths, mttr = zip(*temp)
 	
-	description_lengths, mttr = zip(*temp)
+print 'Total issues analysed: -', len(mttr)
 	
-	print len(mttr)
+plt.plot(mttr, description_lengths, 'ro')
+#plt.show()	
 	
-	plt.plot(description_lengths, mttr, 'ro')
-	#plt.show()
+print calcSpearmanRho(mttr, description_lengths)
 	
-	print scipy.stats.spearmanr(mttr, description_lengths)
-	print scipy.stats.pearsonr(mttr, description_lengths)
+	
+#print scipy.stats.pearsonr(mttr, description_lengths)
 	
 	
 	
