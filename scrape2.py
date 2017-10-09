@@ -6,6 +6,7 @@ import numpy as np
 import scipy.stats
 from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 
 from datetime import datetime
@@ -113,7 +114,7 @@ def diffInDays(first, second):
 	days = (second-first).days
 	hours = days*24 + (second-first).seconds/3600
 	
-	return days//30
+	return days
 	
 def createRankVector(vec):
 	sorted_vec = sorted(vec)
@@ -121,6 +122,17 @@ def createRankVector(vec):
 	
 	return rank
 	
+def calcPearsonRho(vec1,vec2):
+	exp_x = sum(vec1)/len(vec1)
+	exp_y = sum(vec2)/len(vec2)
+	exp_xy = sum([x*y for x,y in zip(vec1,vec2)])/len(vec1)
+	exp_x2 = sum([x**2 for x in vec1])/len(vec1)
+	exp_y2 = sum([y**2 for y in vec2])/len(vec2)
+	std_x = (exp_x2-(exp_x**2))**0.5
+	std_y = (exp_y2-(exp_y**2))**0.5
+	
+	return ((exp_xy-exp_x*exp_y)/(std_x*std_y))
+		
 def calcSpearmanRho(vec1, vec2):
 
 	rank1 = createRankVector(vec1)
@@ -133,6 +145,27 @@ def calcSpearmanRho(vec1, vec2):
 	p = 1 - p
 	
 	return p
+
+def countDuplicates(vec):
+	l = vec[0]
+	n = list()
+	freq = list()
+	count = 0
+	
+	for i in vec:
+		print i
+		if i != l:
+			n.append(l)
+			freq.append(count)
+			count += 1
+			l = i
+		else:
+			count += 1 
+	
+	n.append(l)
+	freq.append(count)
+	
+	return (n, freq)
 
 
 description_lengths = list()
@@ -156,6 +189,32 @@ for dir_name in dir_names:
 
 		if len(mttr) == 0 or len(description_lengths) == 0 or not any(hrs):
 			continue
+
+
+
+open_date,close_date=zip(*mttr)
+#For testing
+open_date = open_date[0:500]
+close_date = close_date[0:50]
+
+open_date = [d for d in open_date if d != -1]
+close_date = [d for d in close_date if d != -1]
+
+open_date=sorted(open_date)
+close_date=sorted(close_date)
+
+
+open_date = [datetime.strptime(y, date_format).date() for y in open_date]
+close_date = [datetime.strptime(y, date_format).date() for y in close_date]
+
+open_date, open_date_freq = countDuplicates(open_date)
+close_date, close_date_freq = countDuplicates(close_date)
+
+pprint(zip(open_date, open_date_freq))
+
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter(date_format))
+plt.gca().xaxis.set_major_locator(mdates.DayLocator())
+plt.plot(open_date, open_date_freq)
 
 mttr = [ diffInDays(x, y) for x, y in mttr ]
 
@@ -184,11 +243,13 @@ description_lengths, mttr = zip(*temp)
 	
 print 'Total issues analysed: -', len(mttr)
 	
-plt.plot(mttr, description_lengths, 'ro')
-#plt.show()	
+#plt.plot(mttr, description_lengths, 'ro')
+plt.show()	
 	
-print calcSpearmanRho(mttr, description_lengths)
 	
+
+#print calcSpearmanRho(mttr, description_lengths)
+#print calcPearsonRho(mttr, description_lengths)
 	
 #print scipy.stats.pearsonr(mttr, description_lengths)
 	
